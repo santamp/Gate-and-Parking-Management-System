@@ -94,6 +94,7 @@ app.use('/api/v1/warehouse', require('./routes/warehouseRoutes'));
 app.use('/api/v1/gate', require('./routes/gateRoutes'));
 app.use('/api/v1/billing', require('./routes/billingRoutes'));
 app.use('/api/v1/admin', require('./routes/adminRoutes'));
+app.use('/api/v1/notifications', require('./routes/notificationRoutes'));
 
 // Root route
 app.get('/', (req, res) => {

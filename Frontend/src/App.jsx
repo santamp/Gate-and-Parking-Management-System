@@ -28,6 +28,7 @@ import ApprovalLogs from './pages/Admin/ApprovalLogs';
 import BillingPayments from './pages/Admin/BillingPayments';
 import AuditLogs from './pages/Admin/AuditLogs';
 import ProjectManagement from './pages/Admin/ProjectManagement';
+import Notifications from './pages/Notifications';
 
 import { Toaster } from 'react-hot-toast';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -54,6 +55,7 @@ function App() {
             <Route path="exit" element={<VehicleExit />} />
             <Route path="payment" element={<PaymentCollection />} />
             <Route path="logs" element={<History />} />
+            <Route path="notifications" element={<Notifications />} />
             <Route path="profile" element={<Profile />} />
           </Route>
         </Route>
@@ -64,6 +66,7 @@ function App() {
              <Route index element={<OccupierDashboard />} />
              <Route path="approvals" element={<OccupierApprovals />} />
              <Route path="history" element={<OccupierHistory />} />
+             <Route path="notifications" element={<Notifications />} />
              <Route path="profile" element={<UnitDetails />} />
           </Route>
         </Route>
@@ -80,6 +83,7 @@ function App() {
              <Route path="billing" element={<BillingPayments />} />
              <Route path="revenue" element={<ParkingConfig />} />
              <Route path="audit-logs" element={<AuditLogs />} />
+             <Route path="notifications" element={<Notifications />} />
           </Route>
         </Route>
 

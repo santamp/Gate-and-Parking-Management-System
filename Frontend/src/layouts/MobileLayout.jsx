@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Home, List, User as UserIcon, LogOut, ShieldCheck, Menu, User, ChevronRight } from 'lucide-react';
 import authService from '../services/authService';
+import NotificationPanel from '../components/NotificationPanel';
 
 const MobileLayout = () => {
   const navigate = useNavigate();
@@ -55,9 +56,12 @@ const MobileLayout = () => {
             <h1 className="text-sm font-black text-slate-800 tracking-tight">GateSync</h1>
             <p className="text-[10px] text-indigo-600 font-bold uppercase tracking-wider">Duty: Main Gate</p>
           </div>
-          <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
-            <LogOut size={18} />
-          </button>
+          <div className="flex items-center gap-2">
+            <NotificationPanel notificationPath="/guard/notifications" tone="indigo" />
+            <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
+              <LogOut size={18} />
+            </button>
+          </div>
         </header>
 
         {/* Scrollable Content Area */}
@@ -155,6 +159,7 @@ const MobileLayout = () => {
               </h2>
             </div>
             <div className="flex items-center gap-4">
+              <NotificationPanel notificationPath="/guard/notifications" tone="indigo" />
               <div className="flex flex-col items-end mr-1">
                 <span className="text-xs font-bold text-slate-800">{user?.name || 'Security Guard'}</span>
                 <span className="text-[9px] font-medium text-indigo-600 uppercase tracking-tighter">System Access: Guard</span>

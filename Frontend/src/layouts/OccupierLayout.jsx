@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Home, List, User as UserIcon, LogOut, ShieldCheck, Menu, User, ChevronRight } from 'lucide-react';
 import authService from '../services/authService';
+import NotificationPanel from '../components/NotificationPanel';
 
 const OccupierLayout = () => {
   const navigate = useNavigate();
@@ -56,9 +57,12 @@ const OccupierLayout = () => {
             <h1 className="text-lg font-bold">GateSync</h1>
             <p className="text-xs opacity-80">Occupier Portal</p>
           </div>
-          <button onClick={handleLogout} className="p-2 hover:bg-white/10 rounded-full transition-colors">
-            <LogOut size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <NotificationPanel notificationPath="/occupier/notifications" tone="indigo" />
+            <button onClick={handleLogout} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+              <LogOut size={20} />
+            </button>
+          </div>
         </header>
 
         {/* Scrollable Content Area */}
@@ -157,6 +161,7 @@ const OccupierLayout = () => {
                </h2>
              </div>
              <div className="flex items-center gap-4">
+               <NotificationPanel notificationPath="/occupier/notifications" tone="indigo" />
                <div className="flex flex-col items-end mr-1">
                  <span className="text-xs font-bold text-gray-900">{user?.name || 'Occupier'}</span>
                  <span className="text-[9px] font-medium text-indigo-600 uppercase tracking-tighter">System Access: Unit</span>

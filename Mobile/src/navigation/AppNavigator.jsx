@@ -3,7 +3,7 @@ import { createGlobalStyle } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Home, List, User, ShieldCheck } from 'lucide-react-native';
+import { Bell, Home, List, User, ShieldCheck } from 'lucide-react-native';
 
 import { COLORS } from '../theme/DesignSystem';
 
@@ -34,6 +34,7 @@ import VehicleLogsScreen from '../screens/Admin/VehicleLogsScreen';
 import ApprovalLogsScreen from '../screens/Admin/ApprovalLogsScreen';
 import ReportsScreen from '../screens/Admin/ReportsScreen';
 import ParkingConfigScreen from '../screens/Admin/ParkingConfigScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -78,6 +79,14 @@ function GuardTabs() {
         options={{
           tabBarIcon: ({ color, size }) => <List color={color} size={size} />,
           title: 'Activity Logs',
+        }}
+      />
+      <Tab.Screen
+        name="Alerts"
+        component={NotificationsScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => <Bell color={color} size={size} />,
+          title: 'Notifications',
         }}
       />
       <Tab.Screen 
@@ -142,6 +151,14 @@ function OccupierTabs() {
           title: 'Vehicle History',
         }}
       />
+      <Tab.Screen
+        name="Alerts"
+        component={NotificationsScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => <Bell color={color} size={size} />,
+          title: 'Notifications',
+        }}
+      />
       <Tab.Screen 
         name="Profile" 
         component={UnitDetails} 
@@ -202,6 +219,14 @@ function AdminTabs() {
         options={{
           tabBarIcon: ({ color, size }) => <List color={color} size={size} />,
           title: 'Global Logs',
+        }}
+      />
+      <Tab.Screen
+        name="Alerts"
+        component={NotificationsScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => <Bell color={color} size={size} />,
+          title: 'Notifications',
         }}
       />
       <Tab.Screen 

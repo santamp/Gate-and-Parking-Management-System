@@ -30,7 +30,11 @@ const OccupierDashboard = () => {
       const log = event?.data || event;
       const logOccupierId = log?.occupierMappedId?._id || log?.occupierMappedId;
       if (!logOccupierId || logOccupierId === user._id) {
-        toast('New Gate Approval Request!', { icon: '🔔', duration: 5000 });
+        toast('New Gate Approval Request!', { 
+          id: log._id || 'new-gate-approval', 
+          icon: '🔔', 
+          duration: 5000 
+        });
       }
       fetchDashboardData();
     };

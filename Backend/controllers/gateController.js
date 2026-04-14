@@ -2,6 +2,7 @@ const VehicleLog = require('../models/VehicleLog');
 const User = require('../models/User');
 const { createAuditLogFromReq } = require('../utils/auditHelper');
 const { getIo } = require('../utils/socket');
+const { createNotification, createNotificationsForRole } = require('../utils/notificationHelper');
 
 /**
  * @desc    Register vehicle entry
@@ -59,10 +60,40 @@ exports.registerVehicleEntry = async (req, res) => {
     try {
       getIo().emit('new_vehicle_log', vehicleLog);
       [occupierMappedId, unitId].filter(Boolean).forEach((targetId) => {
-        getIo().emit(`unit_${targetId}`, { type: 'NEW_LOG', data: vehicleLog });
+        getIo().to(`unit_${targetId}`).emit(`unit_${targetId}`, { type: 'NEW_LOG', data: vehicleLog });
       });
     } catch(e) {
       console.error('Socket error on entry:', e.message);
+    }
+
+    // Notify the occupier and admins about the new approval request
+    try {
+      const relatedEntity = { entityType: 'VehicleLog', entityId: vehicleLog._id };
+      const metadata = { vehicleNumber, vehicleType, driverName, status: vehicleLog.status };
+
+      await createNotification({
+        recipientId: occupierMappedId,
+        recipientRole: 'OCCUPIER',
+        title: 'New vehicle approval request',
+        message: `${vehicleNumber} is waiting for your approval at the gate.`,
+        type: 'vehicle_entry',
+        priority: 'high',
+        relatedEntity,
+        metadata
+      });
+
+      await createNotificationsForRole({
+        role: 'ADMIN',
+        title: 'Vehicle entry registered',
+        message: `${vehicleNumber} was registered by ${req.user.name || 'a guard'} and is pending approval.`,
+        type: 'vehicle_entry',
+        priority: 'normal',
+        relatedEntity,
+        metadata,
+        excludeUserId: req.user._id
+      });
+    } catch (error) {
+      console.error('Notification error on entry:', error.message);
     }
 
     res.status(201).json({
@@ -172,6 +203,62 @@ exports.updateVehicleStatus = async (req, res) => {
       console.error('Socket error on status update:', e.message);
     }
 
+    // Notify connected parties about approval/status changes
+    try {
+      const statusLabelMap = {
+        approved: 'approved',
+        rejected: 'rejected',
+        inside: 'marked inside',
+        not_my_vehicle: 'flagged as not mine'
+      };
+      const statusLabel = statusLabelMap[status] || status;
+      const relatedEntity = { entityType: 'VehicleLog', entityId: vehicleLog._id };
+      const metadata = {
+        vehicleNumber: vehicleLog.vehicleNumber,
+        status,
+        overrideReason: overrideReason || null
+      };
+
+      if (vehicleLog.guardEntryId?.toString() !== req.user._id.toString()) {
+        await createNotification({
+          recipientId: vehicleLog.guardEntryId,
+          recipientRole: 'GUARD',
+          title: 'Vehicle request updated',
+          message: `${vehicleLog.vehicleNumber} was ${statusLabel}.`,
+          type: 'vehicle_status',
+          priority: status === 'approved' ? 'high' : 'normal',
+          relatedEntity,
+          metadata
+        });
+      }
+
+      if (vehicleLog.occupierMappedId?.toString() !== req.user._id.toString()) {
+        await createNotification({
+          recipientId: vehicleLog.occupierMappedId,
+          recipientRole: 'OCCUPIER',
+          title: 'Vehicle request updated',
+          message: `${vehicleLog.vehicleNumber} was ${statusLabel}${overrideReason ? ` by guard override: ${overrideReason}` : ''}.`,
+          type: 'vehicle_status',
+          priority: overrideReason ? 'high' : 'normal',
+          relatedEntity,
+          metadata
+        });
+      }
+
+      await createNotificationsForRole({
+        role: 'ADMIN',
+        title: 'Vehicle status changed',
+        message: `${vehicleLog.vehicleNumber} was ${statusLabel} by ${req.user.name || req.user.role}.`,
+        type: 'vehicle_status',
+        priority: overrideReason ? 'high' : 'normal',
+        relatedEntity,
+        metadata,
+        excludeUserId: req.user._id
+      });
+    } catch (error) {
+      console.error('Notification error on status update:', error.message);
+    }
+
     res.status(200).json({
       success: true,
       data: vehicleLog,
@@ -279,6 +366,37 @@ exports.processPayment = async (req, res) => {
       metadata: { logId, amount, paymentMethod, transactionId: transactionId || null }
     });
 
+    try {
+      const relatedEntity = { entityType: 'ParkingBilling', entityId: bill._id };
+      const metadata = { logId, amount, paymentMethod, transactionId: transactionId || null };
+
+      await createNotificationsForRole({
+        role: 'ADMIN',
+        title: 'Payment collected',
+        message: `Payment of ₹${amount} was collected via ${paymentMethod}.`,
+        type: 'payment',
+        priority: 'normal',
+        relatedEntity,
+        metadata,
+        excludeUserId: req.user._id
+      });
+
+      if (vehicleLog.occupierMappedId?.toString() !== req.user._id.toString()) {
+        await createNotification({
+          recipientId: vehicleLog.occupierMappedId,
+          recipientRole: 'OCCUPIER',
+          title: 'Parking payment completed',
+          message: `Payment of ₹${amount} was recorded for ${vehicleLog.vehicleNumber}.`,
+          type: 'payment',
+          priority: 'normal',
+          relatedEntity,
+          metadata: { ...metadata, vehicleNumber: vehicleLog.vehicleNumber }
+        });
+      }
+    } catch (error) {
+      console.error('Notification error on payment:', error.message);
+    }
+
     res.status(200).json({ success: true, message: 'Payment processed successfully', data: bill });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error processing payment', error: error.message });
@@ -371,6 +489,35 @@ exports.registerVehicleExit = async (req, res) => {
       getIo().emit('log_updated', vehicleLog);
     } catch (e) {
       console.error('Socket error on exit:', e.message);
+    }
+
+    try {
+      const relatedEntity = { entityType: 'VehicleLog', entityId: vehicleLog._id };
+      const metadata = { vehicleNumber: vehicleLog.vehicleNumber, exitTime };
+
+      await createNotification({
+        recipientId: vehicleLog.occupierMappedId,
+        recipientRole: 'OCCUPIER',
+        title: 'Vehicle exited',
+        message: `${vehicleLog.vehicleNumber} has exited the premises.`,
+        type: 'exit',
+        priority: 'normal',
+        relatedEntity,
+        metadata
+      });
+
+      await createNotificationsForRole({
+        role: 'ADMIN',
+        title: 'Vehicle exit recorded',
+        message: `${vehicleLog.vehicleNumber} exited the premises.`,
+        type: 'exit',
+        priority: 'normal',
+        relatedEntity,
+        metadata,
+        excludeUserId: req.user._id
+      });
+    } catch (error) {
+      console.error('Notification error on exit:', error.message);
     }
 
     res.status(200).json({

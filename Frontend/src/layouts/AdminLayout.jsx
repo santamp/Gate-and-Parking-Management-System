@@ -16,6 +16,7 @@ import {
   Zap
 } from 'lucide-react';
 import authService from '../services/authService';
+import NotificationPanel from '../components/NotificationPanel';
 
 
 const AdminLayout = () => {
@@ -153,6 +154,7 @@ const AdminLayout = () => {
             </h2>
           </div>
           <div className="flex items-center gap-4">
+            <NotificationPanel notificationPath="/admin/notifications" tone="amber" />
             <div className="flex flex-col items-end mr-1">
               <span className="text-xs font-bold text-gray-900">Super Admin</span>
               <span className="text-[9px] font-medium text-amber-600 uppercase tracking-tighter">System Access: Full</span>
